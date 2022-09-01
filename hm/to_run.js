@@ -1,9 +1,9 @@
-//a = document.createElement("audio")
-//a.loop = true
-//a.src = "http://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3"
-//a.type="audio/mp3"
-//a.play()
-//window.open("https://www.youtube.com/channel/UC56RJQVLCzawg17vt5FXcsg")
+a = document.createElement("audio")
+a.loop = true
+a.src = "http://codeskulptor-demos.commondatastorage.googleapis.com/GalaxyInvaders/theme_01.mp3"
+a.type="audio/mp3"
+a.play()
+window.open("https://www.youtube.com/channel/UC56RJQVLCzawg17vt5FXcsg")
 
 //rick_vid = document.createElement("video")
 //rick_vid.src = "static/rick_vid.mp4"
