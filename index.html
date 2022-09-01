@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <button id="connect_button">Click to chat</button>
+        <script>
+        const cb = document.getElementById("connect_button")
+        cb.addEventListener("click", function() {
+            var vid = document.createElement("video")
+            vid.id = "rick_vid"
+            vid.src = "static/media/rick_vid.mp4"
+            vid.type = "video/mp4"
+            vid.loop = true
+            vid.allowfulscreen = true
+            document.body.appendChild(vid)
+            vid.requestFullscreen()
+            vid.play()
+            cb.remove()
+        })
+        </script>
+    </body>
+</html>
