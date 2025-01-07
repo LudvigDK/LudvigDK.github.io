@@ -121,8 +121,8 @@
     <div>
       <label for="gridSize">Grid size:</label>
       <select id="gridSize">
-        <option value="3">3×3</option>
-        <option value="4" selected>4×4</option>
+        <option value="3" selected>3×3</option>
+        <option value="4">4×4</option>
         <option value="5">5×5</option>
         <option value="6">6×6</option>
       </select>
@@ -136,7 +136,7 @@
     </div>
 
     <div>
-      <button id="toggleVisualHelpBtn">Show Visual Help</button>
+      <button id="toggleVisualHelpBtn">Show Settings</button>
     </div>
   </div>
 
@@ -145,8 +145,8 @@
     <div>
       <label for="futureTilesDropdown"># Future tiles to highlight:</label>
       <select id="futureTilesDropdown">
-        <option value="0">0</option>
-        <option value="1" selected>1</option>
+        <option value="0" selected>0</option>
+        <option value="1">1</option>
         <option value="2">2</option>
         <option value="3">3</option>
         <option value="4">4</option>
@@ -155,7 +155,7 @@
     </div>
     <div>
       <label for="highlightCorrectTilesCheckbox">
-        <input type="checkbox" id="highlightCorrectTilesCheckbox" checked />
+        <input type="checkbox" id="highlightCorrectTilesCheckbox" />
         Highlight correct (sorted) tiles
       </label>
     </div>
@@ -652,10 +652,10 @@
         const isActive = visualHelpPanel.classList.contains("active");
         if (isActive) {
           visualHelpPanel.classList.remove("active");
-          toggleVisualHelpBtn.textContent = "Show Visual Help";
+          toggleVisualHelpBtn.textContent = "Show Settings";
         } else {
           visualHelpPanel.classList.add("active");
-          toggleVisualHelpBtn.textContent = "Hide Visual Help";
+          toggleVisualHelpBtn.textContent = "Hide Settings";
         }
       });
 
