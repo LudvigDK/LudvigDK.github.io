@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Seeded & Always Solvable Puzzle (Manual Score Saving)</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    #controls {
+      margin-bottom: 10px;
+    }
+    #controls > div {
+      margin: 5px 0;
+    }
+    #controls label {
+      margin-right: 5px;
+    }
+    #controls input[type="text"] {
+      width: 150px;
+    }
+
+    #stats {
+      display: inline-block;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+    #stats p {
+      margin: 2px 0;
+    }
+
+    #puzzleContainer {
+      margin: 0 auto;
+      width: max-content;
+      display: grid;
+      gap: 5px;
+    }
+
+    .tile {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #ddd;
+      font-weight: bold;
+      font-size: 24px;
+      user-select: none; /* prevents accidental text selection */
+      cursor: pointer;   /* indicates clickable tiles */
+    }
+
+    .empty {
+      background-color: #bbb;
+      cursor: default; /* the empty tile is not clickable */
+    }
+
+    /* Already-sorted tile highlight (pale green) */
+    .sorted {
+      background-color: #c3f7c3;
+    }
+
+    /* The very next tile is magenta */
+    .highlight-1 {
+      box-shadow: 0 0 0 3px magenta inset;
+    }
+    /* The subsequent future tiles get progressively darker or different tints. */
+    .highlight-2 {
+      box-shadow: 0 0 0 3px #e6b800 inset;
+    }
+    .highlight-3 {
+      box-shadow: 0 0 0 3px #cc9e00 inset;
+    }
+    .highlight-4 {
+      box-shadow: 0 0 0 3px #b38300 inset;
+    }
+    .highlight-5 {
+      box-shadow: 0 0 0 3px #996f00 inset;
+    }
+
+    /* For winning state message */
+    .won {
+      color: green;
+      font-weight: bold;
+    }
+
+    /* Hide/show the Visual Help panel */
+    #visualHelpPanel {
+      display: none;
+      margin-bottom: 10px;
+    }
+    #visualHelpPanel.active {
+      display: block; /* show when toggled on */
+    }
+
+    /* Scoreboard table */
+    #scoreboard {
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+    #scoreboard th, #scoreboard td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+    }
+    #scoreboard th {
+      background-color: #eee;
+    }
+  </style>
+</head>
+<body>
+  <h1>Seeded & Always Solvable Puzzle</h1>
+
+  <!-- Main controls row -->
+  <div id="controls">
+    <div>
+      <label for="gridSize">Grid size:</label>
+      <select id="gridSize">
+        <option value="3">3×3</option>
+        <option value="4" selected>4×4</option>
+        <option value="5">5×5</option>
+        <option value="6">6×6</option>
+      </select>
+      <button id="newGameBtn">New Game</button>
+    </div>
+
+    <div>
+      <input type="text" id="seedInput" placeholder="Seed (e.g. 42 or 'hello')" />
+      <button id="useSeedBtn">Use Seed</button>
+      <button id="randomSeedBtn">Random Seed</button>
+    </div>
+
+    <div>
+      <button id="toggleVisualHelpBtn">Show Visual Help</button>
+    </div>
+  </div>
+
+  <!-- Visual help settings (hidden by default) -->
+  <div id="visualHelpPanel">
+    <div>
+      <label for="futureTilesDropdown"># Future tiles to highlight:</label>
+      <select id="futureTilesDropdown">
+        <option value="0">0</option>
+        <option value="1" selected>1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+      </select>
+    </div>
+    <div>
+      <label for="highlightCorrectTilesCheckbox">
+        <input type="checkbox" id="highlightCorrectTilesCheckbox" checked />
+        Highlight correct (sorted) tiles
+      </label>
+    </div>
+    <div>
+      <label for="invertControlsCheckbox">
+        <input type="checkbox" id="invertControlsCheckbox" />
+        Invert arrow controls
+      </label>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div id="stats">
+    <p id="timer">Timer: 0.00s</p>
+    <p id="moves">Moves: 0</p>
+    <p id="avgMps">Moves per second: 0.00</p>
+  </div>
+
+  <!-- Puzzle grid -->
+  <div id="puzzleContainer"></div>
+
+  <!-- Status message -->
+  <p id="gameStatus"></p>
+
+  <!-- Username + Save Score row -->
+  <div>
+    <label for="usernameInput">Username:</label>
+    <input type="text" id="usernameInput" placeholder="Your name" />
+    <button id="saveScoreBtn">Save Score</button>
+  </div>
+
+  <!-- Scoreboard container -->
+  <h2>Your Wins</h2>
+  <table id="scoreboard">
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Grid Size</th>
+        <th>Time (s)</th>
+        <th>Moves</th>
+        <th>Moves/s</th>
+        <th>Settings</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody id="scoreboardBody">
+      <!-- We'll dynamically populate this from localStorage -->
+    </tbody>
+  </table>
+  <button id="clearStatsBtn">Clear Stats</button>
+
+  <script>
+    (function() {
+      //----------------------------------------------------------------
+      //  1. Constants & DOM references
+      //----------------------------------------------------------------
+      const STORAGE_KEY_WINS = "slidingPuzzleWins";  // localStorage for scoreboard
+
+      const gridSizeSelect                 = document.getElementById("gridSize");
+      const newGameBtn                     = document.getElementById("newGameBtn");
+      const seedInput                      = document.getElementById("seedInput");
+      const useSeedBtn                     = document.getElementById("useSeedBtn");
+      const randomSeedBtn                  = document.getElementById("randomSeedBtn");
+      const toggleVisualHelpBtn            = document.getElementById("toggleVisualHelpBtn");
+      const visualHelpPanel                = document.getElementById("visualHelpPanel");
+      const futureTilesDropdown            = document.getElementById("futureTilesDropdown");
+      const highlightCorrectTilesCheckbox  = document.getElementById("highlightCorrectTilesCheckbox");
+      const invertControlsCheckbox         = document.getElementById("invertControlsCheckbox");
+
+      const puzzleContainer                = document.getElementById("puzzleContainer");
+      const timerDisplay                   = document.getElementById("timer");
+      const movesDisplay                   = document.getElementById("moves");
+      const avgMpsDisplay                  = document.getElementById("avgMps");
+      const gameStatus                     = document.getElementById("gameStatus");
+
+      const usernameInput                  = document.getElementById("usernameInput");
+      const saveScoreBtn                   = document.getElementById("saveScoreBtn");
+
+      const scoreboardBody                 = document.getElementById("scoreboardBody");
+      const clearStatsBtn                  = document.getElementById("clearStatsBtn");
+
+      //----------------------------------------------------------------
+      //  2. Puzzle & Timer State
+      //----------------------------------------------------------------
+      let _seed = 1;               // current numeric seed
+      let puzzle = [];             // puzzle tiles array
+      let size = 4;                // default grid size
+      let started = false;         // timer started?
+      let timer = 0;               // elapsed seconds
+      let moves = 0;               // number of moves
+      let intervalID = null;       // timer interval
+      let currentSolveStats = null; // we store results here after puzzle is solved
+
+      const startTime = { value: 0 };
+
+      //----------------------------------------------------------------
+      //  3. Scoreboard Logic
+      //----------------------------------------------------------------
+      function saveWinStats(winData) {
+        let existing = JSON.parse(localStorage.getItem(STORAGE_KEY_WINS) || "[]");
+        existing.push(winData);
+        localStorage.setItem(STORAGE_KEY_WINS, JSON.stringify(existing));
+      }
+
+      function renderScoreboard() {
+        let stats = JSON.parse(localStorage.getItem(STORAGE_KEY_WINS) || "[]");
+        // newest first
+        stats = stats.slice().reverse();
+        scoreboardBody.innerHTML = "";
+        stats.forEach((entry) => {
+          const tr = document.createElement("tr");
+
+          const tdUser   = document.createElement("td");
+          const tdGrid   = document.createElement("td");
+          const tdTime   = document.createElement("td");
+          const tdMoves  = document.createElement("td");
+          const tdMps    = document.createElement("td");
+          const tdSets   = document.createElement("td");  // store puzzle settings
+          const tdDate   = document.createElement("td");
+
+          tdUser.textContent  = entry.username;
+          tdGrid.textContent  = entry.gridSize + "×" + entry.gridSize;
+          tdTime.textContent  = entry.time;
+          tdMoves.textContent = entry.moves;
+          tdMps.textContent   = entry.mps;
+
+          // Compose a short string with seed + toggles
+          tdSets.textContent = "Seed=" + entry.seed
+                              + " / FT=" + entry.futureTiles
+                              + " / HC=" + (entry.highlightCorrect ? "Y" : "N")
+                              + " / Inv=" + (entry.invertControls ? "Y" : "N");
+
+          tdDate.textContent  = entry.date;
+
+          tr.appendChild(tdUser);
+          tr.appendChild(tdGrid);
+          tr.appendChild(tdTime);
+          tr.appendChild(tdMoves);
+          tr.appendChild(tdMps);
+          tr.appendChild(tdSets);
+          tr.appendChild(tdDate);
+
+          scoreboardBody.appendChild(tr);
+        });
+      }
+
+      function clearStats() {
+        localStorage.removeItem(STORAGE_KEY_WINS);
+        renderScoreboard();
+      }
+
+      //----------------------------------------------------------------
+      //  4. Setting the Seed
+      //----------------------------------------------------------------
+      function toNumberSeed(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          hash = (hash << 5) - hash + str.charCodeAt(i);
+          hash |= 0; // Convert to 32-bit integer
+        }
+        return Math.abs(hash);
+      }
+
+      function setSeed(newSeed) {
+        if (!/^\d+$/.test(newSeed)) {
+          _seed = toNumberSeed(newSeed);
+        } else {
+          _seed = parseInt(newSeed, 10);
+        }
+      }
+
+      function seededRandom() {
+        _seed = (_seed * 9301 + 49297) % 233280;
+        return _seed / 233280;
+      }
+
+      //----------------------------------------------------------------
+      //  5. Puzzle Solvability
+      //----------------------------------------------------------------
+      function isPuzzleSolvable(puzzle, size) {
+        const arrWithoutNull = puzzle.filter(x => x !== null);
+        const inversions = countInversions(arrWithoutNull);
+
+        if (size % 2 !== 0) {
+          return (inversions % 2 === 0);
+        } else {
+          const blankIndex = puzzle.indexOf(null);
+          const blankRow = Math.floor(blankIndex / size);
+          const rowFromBottom = size - blankRow;
+          return ((inversions + rowFromBottom) % 2 === 0);
+        }
+      }
+
+      function countInversions(arr) {
+        let invCount = 0;
+        for (let i = 0; i < arr.length; i++) {
+          for (let j = i + 1; j < arr.length; j++) {
+            if (arr[i] > arr[j]) {
+              invCount++;
+            }
+          }
+        }
+        return invCount;
+      }
+
+      function ensureSolvable(puzzle, size) {
+        if (!isPuzzleSolvable(puzzle, size)) {
+          const i1 = puzzle.findIndex(x => x !== null);
+          const i2 = puzzle.findIndex((x, idx) => x !== null && idx > i1);
+          if (i1 !== -1 && i2 !== -1) {
+            [puzzle[i1], puzzle[i2]] = [puzzle[i2], puzzle[i1]];
+          }
+        }
+      }
+
+      //----------------------------------------------------------------
+      //  6. Puzzle Generation
+      //----------------------------------------------------------------
+      function initPuzzle(dimension) {
+        size = dimension;
+        puzzle = [];
+        started = false;
+        timer = 0;
+        moves = 0;
+        clearInterval(intervalID);
+        intervalID = null;
+        gameStatus.textContent = "";
+        gameStatus.classList.remove("won");
+        currentSolveStats = null; // reset
+
+        // Create puzzle array [1..(size*size - 1), null]
+        const totalTiles = size * size;
+        for (let i = 1; i < totalTiles; i++) {
+          puzzle.push(i);
+        }
+        puzzle.push(null);
+
+        shufflePuzzle(puzzle);
+        ensureSolvable(puzzle, size);
+
+        // Reset displays
+        timerDisplay.textContent  = "Timer: 0.00s";
+        movesDisplay.textContent  = "Moves: 0";
+        avgMpsDisplay.textContent = "Moves per second: 0.00";
+
+        puzzleContainer.style.gridTemplateColumns = `repeat(${size}, 60px)`;
+        puzzleContainer.style.gridTemplateRows    = `repeat(${size}, 60px)`;
+
+        createPuzzleDOM();
+      }
+
+      function shufflePuzzle(arr) {
+        for (let i = arr.length - 1; i > 0; i--) {
+          const j = Math.floor(seededRandom() * (i + 1));
+          [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+      }
+
+      function createPuzzleDOM() {
+        puzzleContainer.innerHTML = "";
+        puzzle.forEach((value, index) => {
+          const tile = document.createElement("div");
+          tile.classList.add("tile");
+          if (value === null) {
+            tile.classList.add("empty");
+            tile.textContent = "";
+          } else {
+            tile.textContent = value;
+          }
+          tile.addEventListener("click", () => handleTileClick(index));
+          puzzleContainer.appendChild(tile);
+        });
+        applyVisualStyles();
+      }
+
+      function updatePuzzleDOM() {
+        const tiles = puzzleContainer.querySelectorAll(".tile");
+        puzzle.forEach((value, idx) => {
+          tiles[idx].className = "tile";
+          if (value === null) {
+            tiles[idx].classList.add("empty");
+            tiles[idx].textContent = "";
+          } else {
+            tiles[idx].textContent = value;
+          }
+        });
+        applyVisualStyles();
+      }
+
+      //----------------------------------------------------------------
+      //  7. Visual Help
+      //----------------------------------------------------------------
+      function applyVisualStyles() {
+        const tiles = puzzleContainer.querySelectorAll(".tile");
+        const highlightCorrect = highlightCorrectTilesCheckbox.checked;
+        const futureCount = parseInt(futureTilesDropdown.value, 10);
+
+        // Mark correct tiles
+        if (highlightCorrect) {
+          puzzle.forEach((val, i) => {
+            if (val !== null && val === i + 1) {
+              tiles[i].classList.add("sorted");
+            }
+          });
+        }
+
+        // Future tiles highlighting
+        if (futureCount > 0) {
+          let mismatchIndex = -1;
+          for (let i = 0; i < puzzle.length - 1; i++) {
+            if (puzzle[i] !== (i + 1)) {
+              mismatchIndex = i;
+              break;
+            }
+          }
+          if (mismatchIndex !== -1) {
+            for (let offset = 1; offset <= futureCount; offset++) {
+              const tileNumber = mismatchIndex + offset;
+              if (tileNumber > puzzle.length - 1) break;
+              const idxInPuzzle = puzzle.indexOf(tileNumber);
+              if (idxInPuzzle !== -1) {
+                tiles[idxInPuzzle].classList.add(`highlight-${offset}`);
+              }
+            }
+          }
+        }
+      }
+
+      //----------------------------------------------------------------
+      //  8. Game Interaction
+      //----------------------------------------------------------------
+      function handleTileClick(tileIndex) {
+        const emptyIndex = puzzle.indexOf(null);
+        if (areNeighbors(tileIndex, emptyIndex)) {
+          [puzzle[tileIndex], puzzle[emptyIndex]] = [puzzle[emptyIndex], puzzle[tileIndex]];
+          moves++;
+          movesDisplay.textContent = "Moves: " + moves;
+          updatePuzzleDOM();
+
+          if (!started) startTimer();
+          if (isSolved()) handleSolve();
+        }
+      }
+
+      function areNeighbors(i1, i2) {
+        const row1 = Math.floor(i1 / size);
+        const col1 = i1 % size;
+        const row2 = Math.floor(i2 / size);
+        const col2 = i2 % size;
+        return (Math.abs(row1 - row2) + Math.abs(col1 - col2) === 1);
+      }
+
+      // Inverted arrow logic
+      function move(direction) {
+        const emptyIndex = puzzle.indexOf(null);
+        const row = Math.floor(emptyIndex / size);
+        const col = emptyIndex % size;
+        let targetIndex = -1;
+
+        switch (direction) {
+          case "up":
+            if (row < size - 1) targetIndex = emptyIndex + size;
+            break;
+          case "down":
+            if (row > 0) targetIndex = emptyIndex - size;
+            break;
+          case "left":
+            if (col < size - 1) targetIndex = emptyIndex + 1;
+            break;
+          case "right":
+            if (col > 0) targetIndex = emptyIndex - 1;
+            break;
+        }
+
+        if (targetIndex >= 0 && targetIndex < puzzle.length) {
+          [puzzle[emptyIndex], puzzle[targetIndex]] = [puzzle[targetIndex], puzzle[emptyIndex]];
+          moves++;
+          movesDisplay.textContent = "Moves: " + moves;
+          updatePuzzleDOM();
+
+          if (!started) startTimer();
+          if (isSolved()) handleSolve();
+        }
+      }
+
+      function handleSolve() {
+        stopTimer();
+        const avgMps = calculateAverageMPS().toFixed(2);
+        avgMpsDisplay.textContent = "Moves per second: " + avgMps;
+        gameStatus.textContent = "Congratulations! You solved the puzzle!";
+        gameStatus.classList.add("won");
+
+        // Instead of automatically saving, we just store the data in memory
+        currentSolveStats = {
+          time: timer.toFixed(2),
+          moves: moves,
+          mps: avgMps,
+          gridSize: size,
+          seed: seedInput.value.trim() || "(none)",
+          highlightCorrect: highlightCorrectTilesCheckbox.checked,
+          futureTiles: parseInt(futureTilesDropdown.value, 10),
+          invertControls: invertControlsCheckbox.checked,
+          date: new Date().toLocaleString()
+        };
+
+        // The user can later press "Save Score" if they want to store it
+      }
+
+      function isSolved() {
+        for (let i = 0; i < puzzle.length - 1; i++) {
+          if (puzzle[i] !== i + 1) return false;
+        }
+        return (puzzle[puzzle.length - 1] === null);
+      }
+
+      //----------------------------------------------------------------
+      //  9. Timer
+      //----------------------------------------------------------------
+      function startTimer() {
+        if (started) return;
+        started = true;
+        startTime.value = performance.now();
+        intervalID = setInterval(() => {
+          const currentTime = performance.now();
+          const elapsed = (currentTime - startTime.value) / 1000;
+          timer = elapsed;
+          timerDisplay.textContent = "Timer: " + timer.toFixed(2) + "s";
+        }, 100);
+      }
+
+      function stopTimer() {
+        clearInterval(intervalID);
+        intervalID = null;
+      }
+
+      function calculateAverageMPS() {
+        if (timer <= 0) return 0;
+        return moves / timer;
+      }
+
+      //----------------------------------------------------------------
+      // 10. Manual Score Saving
+      //----------------------------------------------------------------
+      function saveCurrentScore() {
+        // Only if the puzzle is solved (i.e., currentSolveStats is set)
+        if (!currentSolveStats) {
+          alert("No solved puzzle to save! Finish the puzzle first.");
+          return;
+        }
+        const username = usernameInput.value.trim() || "Unknown";
+
+        // Merge the username into the stats object
+        const record = {
+          username: username,
+          // plus everything from currentSolveStats
+          ...currentSolveStats
+        };
+
+        // Save to localStorage
+        saveWinStats(record);
+
+        // Clear out the "currentSolveStats" if you like, or keep it
+        currentSolveStats = null;
+        alert("Score saved to scoreboard!");
+
+        renderScoreboard();
+      }
+
+      //----------------------------------------------------------------
+      // 11. Initialization + Event Listeners
+      //----------------------------------------------------------------
+      document.addEventListener("keydown", (e) => {
+        if (intervalID === null && isSolved()) return; // no moves if puzzle is solved
+
+        const invert = invertControlsCheckbox.checked;
+        if (!invert) {
+          switch (e.key) {
+            case "ArrowUp":    move("up");    break;
+            case "ArrowDown":  move("down");  break;
+            case "ArrowLeft":  move("left");  break;
+            case "ArrowRight": move("right"); break;
+          }
+        } else {
+          switch (e.key) {
+            case "ArrowUp":    move("down");  break;
+            case "ArrowDown":  move("up");    break;
+            case "ArrowLeft":  move("right"); break;
+            case "ArrowRight": move("left");  break;
+          }
+        }
+      });
+
+      toggleVisualHelpBtn.addEventListener("click", () => {
+        const isActive = visualHelpPanel.classList.contains("active");
+        if (isActive) {
+          visualHelpPanel.classList.remove("active");
+          toggleVisualHelpBtn.textContent = "Show Visual Help";
+        } else {
+          visualHelpPanel.classList.add("active");
+          toggleVisualHelpBtn.textContent = "Hide Visual Help";
+        }
+      });
+
+      futureTilesDropdown.addEventListener("change", updatePuzzleDOM);
+      highlightCorrectTilesCheckbox.addEventListener("change", updatePuzzleDOM);
+
+      clearStatsBtn.addEventListener("click", () => {
+        const confirmClear = window.confirm("Are you sure you want to clear all saved stats?");
+        if (confirmClear) {
+          clearStats();
+        }
+      });
+
+      newGameBtn.addEventListener("click", () => {
+        const dimension = parseInt(gridSizeSelect.value, 10);
+        initPuzzle(dimension);
+      });
+
+      useSeedBtn.addEventListener("click", () => {
+        const s = seedInput.value.trim();
+        if (s.length > 0) {
+          setSeed(s);
+          const dimension = parseInt(gridSizeSelect.value, 10);
+          initPuzzle(dimension);
+        }
+      });
+
+      randomSeedBtn.addEventListener("click", () => {
+        const rndSeed = Math.floor(Math.random() * 1e9).toString();
+        seedInput.value = rndSeed;
+        setSeed(rndSeed);
+        const dimension = parseInt(gridSizeSelect.value, 10);
+        initPuzzle(dimension);
+      });
+
+      // Save Score button
+      saveScoreBtn.addEventListener("click", saveCurrentScore);
+
+      // Initialize scoreboard & puzzle
+      renderScoreboard();
+      setSeed("42");
+      initPuzzle(4); // default 4×4
+    })();
+  </script>
+</body>
+</html>
