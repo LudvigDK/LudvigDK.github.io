@@ -1,0 +1,15 @@
+#specs .glowing-img {
+    position: relative;
+    aspect-ratio: 1286/677;
+    width: 100%;
+    height: auto;
+}
+
+#specs .glowing-img img {
+    position: absolute;
+    width: 100%;
+}
+#specs .glowing-img .img-glow {
+    filter: blur(100px);
+    z-index: -1;
+}

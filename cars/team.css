@@ -1,0 +1,35 @@
+#team {
+    position: relative;
+    padding-bottom: 150px;
+
+    background: linear-gradient(0deg, #270909 0%, black 80%);
+}
+
+#team article {
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    align-self: center;
+    text-align: left;
+    width: 60%;
+}
+
+#team h1 {
+    position: relative;
+    font-size: 11vw;
+    font-weight: 800;
+    margin: 0px;
+    margin-bottom: -2vw;
+}
+
+#team h1 .small {
+    position: relative;
+    font-size: 0.5em;
+    bottom: -.7em;
+}
+
+#team #team-img {
+    border-radius: .5rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}

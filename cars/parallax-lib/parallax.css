@@ -1,0 +1,29 @@
+parallax {
+    --parallax-buffer: calc((25vw + 25vh) / 2);
+    --parallax-aspect-ratio: 16/9;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    aspect-ratio: var(--parallax-aspect-ratio);
+    background-color: black;
+    overflow: hidden;
+}
+parallax img[data-parallax] {
+    position: absolute;
+    width: calc(100% + var(--parallax-buffer));
+    height: auto;
+    pointer-events: none;
+    user-select: none;
+}
+parallax [data-parallax] {
+    transition: transform 0.4s ease-out;
+}
+parallax [data-smooth-edges] {
+    mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent),
+               linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    mask-composite: intersect;
+}

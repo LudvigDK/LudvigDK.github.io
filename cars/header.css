@@ -1,0 +1,49 @@
+header {
+    z-index: 1000;
+    position: fixed;
+    top: 50%;
+    right: 30px;
+    transform: translateY(-50%);
+    width: 15vw;
+}
+
+#route66 {
+    position: relative;
+    color:var(--text-light);
+    width: 100%;
+    height: auto;
+
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 5px black);
+
+    opacity: 0;
+
+    transition: opacity .3s ease-in-out
+}
+
+#lightning-mcqueen-top {
+    --x: 0;
+    --y: 0;
+    --r: 0;
+
+    position: absolute;
+    width: 25%;
+    left: var(--x);
+    top: var(--y);
+    transform: rotate(var(--r));
+
+    transition: left 0.05s ease-out,
+                top 0.05s ease-out,
+                transform 0.05s ease-out,
+                opacity .3s ease-in-out;
+
+    opacity: 0;
+
+    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.8));
+}
+
+#route66.visible {
+    opacity: 1;
+}
+#lightning-mcqueen-top.visible {
+    opacity: 1;
+}

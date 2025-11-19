@@ -1,0 +1,57 @@
+#trailer {
+    position: relative;
+    padding-bottom: 150px;
+}
+
+#trailer article {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    align-self: center;
+    text-align: center;
+    width: 60%;
+}
+
+#trailer h1 {
+    position: relative;
+    font-size: 11vw;
+    font-weight: 800;
+    margin: 0px;
+    margin-bottom: 1rem;
+}
+
+#trailer #vid-container {
+    position: relative;
+}
+
+#trailer #trailer-vid {
+    position: relative;
+    width: 100%;
+    border-radius: .5rem .5rem 0 0;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+#trailer #trailer-mute-btn {
+    border-radius: 0 0 .5rem .5rem;
+    border-width: 0;
+    font-size: 1rem;
+    height: 2em;
+
+    background-color: red;
+    color: white;
+    box-shadow: 0 0 50px rgba(255, 0, 0, 0.7);
+
+    transition: color 0.4s ease-in-out,
+                background-color 0.4s ease-in-out,
+                box-shadow 0.4s ease-in-out;
+
+    cursor: pointer;
+
+}
+
+#trailer #trailer-mute-btn.muted {
+    background-color: white;
+    color: black;
+    box-shadow: 0 0 50px rgba(255, 255, 255, 0.5);
+}

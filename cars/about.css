@@ -1,0 +1,21 @@
+#about {
+    position: relative;
+    padding-bottom: 150px;
+}
+
+#about article {
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    align-self: center;
+    text-align: right;
+    width: 60%;
+}
+
+#about h1 {
+    position: relative;
+    font-size: 11vw;
+    font-weight: 800;
+    margin: 0px;
+    margin-bottom: -2vw;
+}
