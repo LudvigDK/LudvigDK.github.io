@@ -136,6 +136,7 @@ function DeleteShift(period, shift_key) {
         delete DATA.shifts[period]
         SaveData()
         RefreshPeriods()
+        RefreshShifts()
     }
 }
 
@@ -165,6 +166,10 @@ NEW_SHIFT.addEventListener('submit', (event) => {
     RefreshShifts()
 
     SaveData()
+})
+
+PERIOD.addEventListener('change', () => {
+    RefreshShifts()
 })
 
 RATE.addEventListener('change', () => {
@@ -205,13 +210,24 @@ UpdateShiftToggle()
 
 
 
-
-setInterval(() => {
-    const cdetails = document.querySelectorAll('cdetails');
-    cdetails.forEach((e) => {
-        e.querySelector('summary').addEventListener('click', () => {
-            e.toggleAttribute('open')
-        })
-        e.style.setProperty('--content-height', e.querySelector('content').scrollHeight + "px");
+const cdetails = document.querySelectorAll('cdetails')
+const cdetails_array = Array.from(cdetails)
+const cdetailsObserver = new MutationObserver((mutations) => {
+    mutations.some((m) => {
+        const root = cdetails_array.find((r) => r.contains(m.target))
+        if (root) {
+            root.style.setProperty('--content-height', root.querySelector('content').scrollHeight + "px")
+            return true
+        }
     })
-}, 250);
+})
+cdetails.forEach((e) => {
+    e.querySelector('summary').addEventListener('click', () => {
+        e.toggleAttribute('open')
+    })
+    cdetailsObserver.observe(e, {
+        childList: true,
+        subtree: true
+    })
+    e.style.setProperty('--content-height', e.querySelector('content').scrollHeight + "px")
+})

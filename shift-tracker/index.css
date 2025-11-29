@@ -33,7 +33,7 @@ cdetails content {
     list-style: none;
     margin: 0;
     padding: .5em;
-    max-height: 30%;
+    max-height: 30vh;
     overflow: auto;
 }
 #shifts li {
@@ -70,10 +70,13 @@ cdetails content {
     padding: .2em;
     font-size: 1em;
     margin-top: .3em;
-    transition: background-color .1s ease-in-out;
+    transition: background-color .1s ease-in-out,;
 }
 #period:hover {
     background-color: rgba(255, 255, 255, .3);
+}
+#period option {
+    color: black;
 }
 #total {
     display: flex;
@@ -109,10 +112,12 @@ cdetails {
     position: relative;
     max-height: calc(1.5em + 1px);
     overflow: hidden;
-    transition: max-height .4s ease-in-out;
+    transition: max-height .4s ease-in-out,
+                height .4s ease-in-out;
 }
 
 cdetails[open] {
+    height: calc(var(--content-height) + 1.5em);
     max-height: calc(var(--content-height) + 1.5em);
 }
 
