@@ -202,3 +202,16 @@ SHIFT_TOGGLE.addEventListener('click', () => {
 RefreshPeriods()
 RefreshShifts()
 UpdateShiftToggle()
+
+
+
+
+setInterval(() => {
+    const cdetails = document.querySelectorAll('cdetails');
+    cdetails.forEach((e) => {
+        e.querySelector('summary').addEventListener('click', () => {
+            e.toggleAttribute('open')
+        })
+        e.style.setProperty('--content-height', e.querySelector('content').scrollHeight + "px");
+    })
+}, 250);

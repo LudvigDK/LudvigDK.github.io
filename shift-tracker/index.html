@@ -2,37 +2,38 @@
     <main>
         <h1>Shift Tracker</h1>
 
-        <details>
+        <cdetails>
             <summary>Settings</summary>
-            <label>Hourly Rate:</label>
-            <input type="number" id="rate">
-        </details>
+            <content>
+                <label>Hourly Rate:</label>
+                <input type="number" id="rate">
+                    <form id="new-shift">
+                    <label>Date:</label>
+                    <input type="date" id="date">
 
-        <details>
-            <summary>Manually register new shift</summary>
-            <form id="new-shift">
-                <label>Date:</label>
-                <input type="date" id="date">
+                    <label>From:</label>
+                    <input type="time" id="from_time">
 
-                <label>From:</label>
-                <input type="time" id="from_time">
+                    <label>To:</label>
+                    <input type="time" id="to_time">
 
-                <label>To:</label>
-                <input type="time" id="to_time">
+                    <button type="submit" id="submit">Submit</button>
+                </form>
+            </content>
+        </cdetails>
 
-                <button type="submit" id="submit">Submit</button>
-            </form>
-        </details>
-
-        <details open>
-            <summary>Shifts for period: <select id="period"></select></summary>
-            <ul id="shifts"></ul>
-            <span>Total: <span id="pay"></span> DKK.</span>
-        </details>
+        <cdetails open>
+            <summary>Shifts</summary>
+            <content>
+                <select id="period"></select>
+                <ul id="shifts"></ul>
+                <span id="total">Total: <span id="pay"></span> DKK.</span>
+            </content>
+        </cdetails>
 
         <button id="shift-toggle">Start shift</button>
     </main>
 
-    <script src="index.js"></script>
     <link rel="stylesheet" href="index.css">
+    <script src="index.js"></script>
 </body>
