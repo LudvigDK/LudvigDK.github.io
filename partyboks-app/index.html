@@ -1,0 +1,52 @@
+<head>
+    <link rel="stylesheet" href="config.css">
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="nav.css">
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="games.css">
+</head>
+
+<body>
+    <section id="home-page" data-page="#home" data-transition="none">
+        <img src="assets/logo-full.png" id="title">
+        <div id="grid">
+            <div></div>
+        </div>
+    </section>
+    <section id="games-page" data-page="#games" data-transition="slide-down" data-initial>
+        <h1>Drukspil</h1>
+        <div id="games-list">
+            <a href="#games-altellerintet" class="game-item">
+                <img class="thumb" src="assets/unnamed.webp">
+                <div class="info">
+                    <h1>Alt eller Intet!</h1>
+                    <p>Alt eller intet er et spændende drukspil der handler om at tage koncekvenser!</p>
+                </div>
+            </a>
+            <a href="#games-meyer" class="game-item">
+                <img class="thumb" src="assets/unnamed.webp">
+                <div class="info">
+                    <h1>Meyer!</h1>
+                    <p>Nøjagtigt som du allerede kender det, nu bare online!</p>
+                </div>
+            </a>
+        </div>
+    </section>
+    <section id="games-altellerintet-setup-page" data-page="#games-altellerintet" data-transition="slide-down">
+        <h1>altellerintet</h1>
+    </section>
+    <section id="games-meyer-setup-page" data-page="#games-meyer" data-transition="slide-down">
+        <h1>meyer</h1>
+    </section>
+    <nav>
+        <a href="#speakers" class="nav-item">Højtalere</a>
+        <a href="#home" class="nav-item current">Hjem</a>
+        <a href="#games" class="nav-item">Drukspil</a>
+        <a href="#settings" class="nav-item">Indstillinger</a>
+    </nav>
+</body>
+
+<script src="index.js"></script>
+
+<script src="page-handler.js"></script>
+<link rel="stylesheet" href="page-handler.css">

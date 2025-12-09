@@ -1,0 +1,17 @@
+:root {
+    --bg: #0A0303;
+    --bg-rgb: 10, 3, 3;
+    --bg-secondary: #130F0F;
+    --bg-secondary-rgb: 19, 15, 15;
+    --primary: #E80000;
+    --primary-rgb: 232, 0, 0;
+    --text: #FFFFFF;
+    --text-rgb: 255, 255, 255;
+    --border: #FFFFFF20 1px solid;
+    --radius: 15px;
+
+    /* Made with https://www.kvin.me/css-springs */
+    /* 226ms, 20% */
+    --spring-easing: linear(0, 0.0101, 0.0375, 0.0778 4.26%, 0.184 7.11%, 0.5483 15.63%, 0.7415 21.32%, 0.8148, 0.8733, 0.9185, 0.9523, 0.9767, 0.9934 38.37%, 1.008, 1.0141 46.89%, 1.0151 49.74%, 1.0142 54%, 1.0055 68.21%, 1.0021 76.73%, 0.9998 99.47%);
+    --spring-duration: 0.3752s;
+}

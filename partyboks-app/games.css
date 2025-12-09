@@ -1,0 +1,47 @@
+#games-page {
+    background-color: var(--bg);
+}
+
+#games-list {
+    display: grid;
+    grid-template-rows: auto;
+    gap: 10px;
+}
+#games-list .game-item {
+    color: var(--text);
+    text-decoration: none;
+    background-color: var(--bg-secondary);
+
+    position: relative;
+    width: 100%;
+    height: fit-content;
+    padding: 10px;
+
+    border: var(--border);
+    border-radius: var(--radius);
+
+    display: grid;
+    grid-template-columns: 30% 1fr;
+    gap: 10px;
+}
+#games-list .thumb {
+    position: relative;
+    width: 100%;
+    border-radius: var(--radius);
+}
+#games-list .info {
+    display: flex;
+    flex-direction: column;
+
+    justify-content: center;
+}
+#games-list .info h1 {
+    margin: 0;
+}
+#games-list .info p {
+    margin: 0;
+}
+
+#games-page.custom-hide {
+    top: calc(100% - 30px);
+}

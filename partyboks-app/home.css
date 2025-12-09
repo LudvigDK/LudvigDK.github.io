@@ -1,0 +1,9 @@
+#title {
+    position: relative;
+    width: 70vw;
+}
+
+#grid {
+    display: grid;
+    grid-template-rows: auto;
+}
