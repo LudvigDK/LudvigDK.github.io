@@ -29,12 +29,13 @@ const SUBMIT = document.querySelector('#new-shift #submit')
 const SHIFT_TOGGLE = document.querySelector('#shift-toggle')
 
 
-let DATA = JSON.parse(localStorage.getItem('shifts'))
-if (DATA == null) {
-    DATA = {
-        shifts: {}
-    }
-}
+
+let DATA = { shifts: {} }
+try {
+    const stored = localStorage.getItem('shifts')
+    if (stored) DATA = JSON.parse(stored)
+} catch (e) {}
+
 RATE.value = localStorage.getItem('rate')
 DATE.value = localStorage.getItem('date')
 FROM_TIME.value = localStorage.getItem('from')
