@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0f9f7a">
+    <title>Body by Numbers</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="apple-touch-icon" href="icons/icon-192.svg">
+  </head>
+  <body>
+    <div class="app">
+      <header class="top-bar">
+        <div>
+          <p class="app-title">Body by Numbers</p>
+          <p class="app-subtitle">Track your weight with calm momentum.</p>
+        </div>
+      </header>
+
+      <main>
+        <section class="screen active" id="home" data-screen="home">
+          <div class="card setup-card" id="setupCard">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Get started</p>
+                <h2>Set your plan</h2>
+              </div>
+              <span class="pill neutral">First time setup</span>
+            </div>
+            <form class="plan-form" data-plan-form>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="setupStartDate">Start date</label>
+                  <input id="setupStartDate" name="startDate" type="date" required>
+                </div>
+                <div class="field">
+                  <label for="setupStartWeight">Start weight (kg)</label>
+                  <input id="setupStartWeight" name="startWeightKg" type="number" step="0.1" min="20" inputmode="decimal" required>
+                </div>
+                <div class="field">
+                  <label for="setupTargetWeight">Target weight (kg)</label>
+                  <input id="setupTargetWeight" name="targetWeightKg" type="number" step="0.1" min="20" inputmode="decimal" required>
+                </div>
+              </div>
+              <div class="plan-mode">
+                <p class="label">Plan pace</p>
+                <div class="toggle-group" role="radiogroup" aria-label="Plan pace">
+                  <button class="toggle-btn active" type="button" data-mode="duration">By duration</button>
+                  <button class="toggle-btn" type="button" data-mode="daily">By daily change</button>
+                </div>
+                <input type="hidden" name="planMode" value="duration">
+              </div>
+              <div class="field-grid">
+                <div class="field field-duration">
+                  <label for="setupDuration">Duration (days)</label>
+                  <input id="setupDuration" name="durationDays" type="number" min="1" step="any" inputmode="numeric" required>
+                </div>
+                <div class="field field-daily is-hidden">
+                  <label for="setupDailyChange">Daily change (kg/day)</label>
+                  <input id="setupDailyChange" name="dailyChangeKg" type="number" step="0.01" inputmode="decimal">
+                  <p class="field-hint">Use positive for loss, negative for gain.</p>
+                </div>
+              </div>
+              <button class="btn primary wide" type="submit">Start plan</button>
+              <div class="form-note" data-plan-note></div>
+            </form>
+          </div>
+
+          <div class="card action-card" id="actionCard">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Today's focus</p>
+                <h2 id="actionHeadline">Set your plan</h2>
+              </div>
+              <span class="pill" id="actionPill">Guidance</span>
+            </div>
+            <p class="action-detail" id="actionDetail">Enter a plan to get daily guidance.</p>
+          </div>
+
+          <div class="card hero" id="heroCard">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Dashboard</p>
+                <h2>Today's snapshot</h2>
+              </div>
+              <span class="pill" id="statusPill">Set a plan</span>
+            </div>
+            <div class="hero-row">
+              <div>
+                <p class="label">Current weight</p>
+                <p class="hero-value" id="currentWeight">--</p>
+                <p class="muted" id="currentWeightDate">No entries yet</p>
+              </div>
+              <div class="hero-block">
+                <p class="label">Expected today</p>
+                <p class="hero-secondary" id="expectedToday">--</p>
+                <p class="muted">kg</p>
+              </div>
+            </div>
+            <div class="hero-row">
+              <div>
+                <p class="label">Difference</p>
+                <p class="hero-secondary" id="differenceGrams">--</p>
+              </div>
+              <div class="hero-block">
+                <p class="label">Status</p>
+                <p class="hero-secondary" id="statusText">--</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Log</p>
+                <h2>Today</h2>
+              </div>
+            </div>
+            <form id="entryForm" class="entry-form">
+              <fieldset id="entryFieldset">
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="entryDate">Date</label>
+                    <input id="entryDate" type="date" required>
+                  </div>
+                  <div class="field">
+                    <label for="entryWeight">Actual weight (kg)</label>
+                    <input id="entryWeight" type="number" step="0.1" min="20" inputmode="decimal" required>
+                  </div>
+                </div>
+                <button class="btn primary wide" type="submit">Save entry</button>
+                <div class="form-note" id="saveFeedback" aria-live="polite"></div>
+              </fieldset>
+            </form>
+          </div>
+
+          <div class="card summary-card">
+            <div class="summary-row">
+              <div>
+                <p class="label">Daily change</p>
+                <p class="summary-value" id="dailyChange">--</p>
+              </div>
+              <div>
+                <p class="label">Expected daily</p>
+                <p class="summary-value" id="expectedDaily">--</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" id="stats" data-screen="stats">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Progress</p>
+                <h2>Target momentum</h2>
+              </div>
+              <span class="pill positive">Reward view</span>
+            </div>
+            <div class="ring-wrap">
+              <svg class="ring-svg" width="180" height="180" viewBox="0 0 180 180">
+                <defs>
+                  <linearGradient id="ringGradient" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#14b8a6"></stop>
+                    <stop offset="100%" stop-color="#22c55e"></stop>
+                  </linearGradient>
+                </defs>
+                <circle class="ring-track" cx="90" cy="90" r="76"></circle>
+                <circle class="ring-progress" id="progressCircle" cx="90" cy="90" r="76"></circle>
+              </svg>
+              <div class="ring-center">
+                <p class="ring-value" id="progressPercent">--</p>
+                <p class="muted" id="progressLabel">To target</p>
+              </div>
+            </div>
+            <div class="progress-grid">
+              <div>
+                <p class="label">Start</p>
+                <p class="summary-value" id="startWeightStat">--</p>
+              </div>
+              <div>
+                <p class="label">Current</p>
+                <p class="summary-value" id="currentWeightStat">--</p>
+              </div>
+              <div>
+                <p class="label">Target</p>
+                <p class="summary-value" id="targetWeightStat">--</p>
+              </div>
+              <div>
+                <p class="label">Consistency</p>
+                <p class="summary-value" id="streakValue">0 days</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Consistency</p>
+                <h2>On-track days</h2>
+              </div>
+            </div>
+            <div class="heatmap" id="heatmapGrid"></div>
+            <div class="heat-legend">
+              <span class="legend-item"><span class="heat-swatch on"></span>On track</span>
+              <span class="legend-item"><span class="heat-swatch off"></span>Off / missed</span>
+              <span class="legend-item"><span class="heat-swatch future"></span>Future</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Timeline</p>
+                <h2>Expected vs actual</h2>
+              </div>
+            </div>
+            <div class="timeline-list" id="timelineList"></div>
+          </div>
+        </section>
+
+        <section class="screen" id="settings" data-screen="settings">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Plan</p>
+                <h2>Adjust settings</h2>
+              </div>
+            </div>
+            <form class="plan-form" data-plan-form>
+              <div class="field-grid">
+                <div class="field">
+                  <label for="settingsStartDate">Start date</label>
+                  <input id="settingsStartDate" name="startDate" type="date" required>
+                </div>
+                <div class="field">
+                  <label for="settingsStartWeight">Start weight (kg)</label>
+                  <input id="settingsStartWeight" name="startWeightKg" type="number" step="0.1" min="20" inputmode="decimal" required>
+                </div>
+                <div class="field">
+                  <label for="settingsTargetWeight">Target weight (kg)</label>
+                  <input id="settingsTargetWeight" name="targetWeightKg" type="number" step="0.1" min="20" inputmode="decimal" required>
+                </div>
+              </div>
+              <div class="plan-mode">
+                <p class="label">Plan pace</p>
+                <div class="toggle-group" role="radiogroup" aria-label="Plan pace">
+                  <button class="toggle-btn active" type="button" data-mode="duration">By duration</button>
+                  <button class="toggle-btn" type="button" data-mode="daily">By daily change</button>
+                </div>
+                <input type="hidden" name="planMode" value="duration">
+              </div>
+              <div class="field-grid">
+                <div class="field field-duration">
+                  <label for="settingsDuration">Duration (days)</label>
+                  <input id="settingsDuration" name="durationDays" type="number" min="1" step="any" inputmode="numeric" required>
+                </div>
+                <div class="field field-daily is-hidden">
+                  <label for="settingsDailyChange">Daily change (kg/day)</label>
+                  <input id="settingsDailyChange" name="dailyChangeKg" type="number" step="0.01" inputmode="decimal">
+                  <p class="field-hint">Use positive for loss, negative for gain.</p>
+                </div>
+              </div>
+              <button class="btn primary wide" type="submit">Save plan</button>
+              <div class="form-note" data-plan-note></div>
+            </form>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Data</p>
+                <h2>Manage local storage</h2>
+              </div>
+            </div>
+            <button class="btn ghost wide" id="resetBtn" type="button">Reset all data</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <nav class="bottom-nav" aria-label="Primary">
+      <div class="nav-inner">
+        <button class="nav-btn active" type="button" data-tab="home" aria-pressed="true">Home</button>
+        <button class="nav-btn" type="button" data-tab="stats" aria-pressed="false">Stats</button>
+        <button class="nav-btn" type="button" data-tab="settings" aria-pressed="false">Settings</button>
+      </div>
+    </nav>
+
+    <script src="app.js"></script>
+  </body>
+</html>
