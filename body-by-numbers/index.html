@@ -78,6 +78,37 @@
             <p class="action-detail" id="actionDetail">Enter a plan to get daily guidance.</p>
           </div>
 
+          <div class="card" id="intakeCard">
+            <div class="card-header">
+              <div>
+                <p class="eyebrow">Nutrition</p>
+                <h2>Remaining to eat</h2>
+              </div>
+              <span class="pill" id="intakePill">Plan pace</span>
+            </div>
+            <p class="intake-value" id="intakeHeadline">--</p>
+            <p class="muted" id="intakeDetail">Log a morning and current weigh-in to estimate the gap.</p>
+            <form id="intakeForm" class="entry-form">
+              <fieldset id="intakeFieldset">
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="intakeDate">Date</label>
+                    <input id="intakeDate" type="date" required>
+                  </div>
+                  <div class="field">
+                    <label for="morningWeight">Morning weight (kg)</label>
+                    <input id="morningWeight" type="number" step="0.1" min="20" inputmode="decimal" required>
+                  </div>
+                <div class="field">
+                    <label for="intakeCurrentWeight">Current weight (kg)</label>
+                    <input id="intakeCurrentWeight" type="number" step="0.1" min="20" inputmode="decimal">
+                </div>
+              </div>
+                <div class="form-note" id="intakeFeedback" aria-live="polite"></div>
+              </fieldset>
+            </form>
+          </div>
+
           <div class="card hero" id="heroCard">
             <div class="card-header">
               <div>

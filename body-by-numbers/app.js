@@ -1,6 +1,7 @@
 const STORAGE_KEYS = {
   plan: "plan",
   entries: "entries",
+  checkins: "checkins",
 };
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -9,6 +10,7 @@ const TRACK_TOLERANCE_GRAMS = 120;
 const state = {
   plan: null,
   entries: [],
+  checkins: [],
 };
 
 const dom = {
@@ -32,6 +34,15 @@ const dom = {
   entryWeight: document.getElementById("entryWeight"),
   entryFieldset: document.getElementById("entryFieldset"),
   saveFeedback: document.getElementById("saveFeedback"),
+  intakeForm: document.getElementById("intakeForm"),
+  intakeDate: document.getElementById("intakeDate"),
+  intakeFieldset: document.getElementById("intakeFieldset"),
+  intakeMorningWeight: document.getElementById("morningWeight"),
+  intakeCurrentWeight: document.getElementById("intakeCurrentWeight"),
+  intakeHeadline: document.getElementById("intakeHeadline"),
+  intakeDetail: document.getElementById("intakeDetail"),
+  intakePill: document.getElementById("intakePill"),
+  intakeFeedback: document.getElementById("intakeFeedback"),
   planForms: document.querySelectorAll("[data-plan-form]"),
   progressPercent: document.getElementById("progressPercent"),
   progressLabel: document.getElementById("progressLabel"),
@@ -50,6 +61,7 @@ let ringCircumference = 0;
 document.addEventListener("DOMContentLoaded", () => {
   state.plan = loadPlan();
   state.entries = normalizeEntries(loadEntries());
+  state.checkins = normalizeCheckins(loadCheckins());
 
   initRing();
   initNav();
@@ -83,6 +95,19 @@ function initForms() {
 
   if (dom.entryForm) {
     dom.entryForm.addEventListener("submit", handleEntrySubmit);
+  }
+
+  if (dom.intakeForm) {
+    dom.intakeForm.addEventListener("submit", handleCheckinSubmit);
+  }
+  if (dom.intakeDate) {
+    dom.intakeDate.addEventListener("change", handleCheckinDateChange);
+  }
+  if (dom.intakeMorningWeight) {
+    dom.intakeMorningWeight.addEventListener("input", renderCheckinSummary);
+  }
+  if (dom.intakeCurrentWeight) {
+    dom.intakeCurrentWeight.addEventListener("input", renderCheckinSummary);
   }
 
   if (dom.resetBtn) {
@@ -138,6 +163,9 @@ function initDefaults() {
   if (dom.entryDate && !dom.entryDate.value) {
     dom.entryDate.value = todayISO;
   }
+  if (dom.intakeDate && !dom.intakeDate.value) {
+    dom.intakeDate.value = todayISO;
+  }
 
   if (!state.plan) {
     dom.planForms.forEach((form) => {
@@ -148,12 +176,19 @@ function initDefaults() {
   } else {
     syncPlanForms(state.plan);
   }
+
+  if (dom.intakeDate) {
+    loadCheckinIntoForm(dom.intakeDate.value);
+  }
 }
 
 function renderAll() {
   const hasPlan = Boolean(state.plan);
   dom.setupCard.style.display = hasPlan ? "none" : "block";
   dom.entryFieldset.disabled = !hasPlan;
+  if (dom.intakeFieldset) {
+    dom.intakeFieldset.disabled = !hasPlan;
+  }
   if (!hasPlan) {
     dom.saveFeedback.textContent = "Set a plan to unlock logging.";
     dom.saveFeedback.classList.remove("error");
@@ -211,6 +246,8 @@ function renderDashboard() {
   } else {
     dom.expectedDaily.textContent = "--";
   }
+
+  renderCheckinSummary();
 }
 
 function renderActionCard(plan, entries, expectedToday) {
@@ -434,15 +471,135 @@ function handleEntrySubmit(event) {
   renderAll();
 }
 
+function handleCheckinSubmit(event) {
+  event.preventDefault();
+  if (!state.plan) {
+    setFormNote(dom.intakeFeedback, "Set a plan before logging weigh-ins.", true);
+    return;
+  }
+
+  const dateISO = dom.intakeDate.value;
+  const morningWeightKg = Number(dom.intakeMorningWeight.value);
+  const currentWeightKg = dom.intakeCurrentWeight.value
+    ? Number(dom.intakeCurrentWeight.value)
+    : null;
+
+  if (!dateISO || !Number.isFinite(morningWeightKg) || morningWeightKg <= 0) {
+    setFormNote(dom.intakeFeedback, "Enter a valid date and morning weight.", true);
+    return;
+  }
+  if (currentWeightKg !== null && (!Number.isFinite(currentWeightKg) || currentWeightKg <= 0)) {
+    setFormNote(dom.intakeFeedback, "Enter a valid current weight.", true);
+    return;
+  }
+
+  const checkin = {
+    dateISO,
+    morningWeightKg,
+    currentWeightKg,
+  };
+
+  state.checkins = upsertCheckin(state.checkins, checkin);
+  saveCheckins(state.checkins);
+  setFormNote(dom.intakeFeedback, "Weigh-ins saved.", false);
+  renderCheckinSummary();
+}
+
+function handleCheckinDateChange() {
+  if (!dom.intakeDate) return;
+  loadCheckinIntoForm(dom.intakeDate.value);
+  renderCheckinSummary();
+}
+
 function handleReset() {
   const confirmed = window.confirm("Reset all local data? This cannot be undone.");
   if (!confirmed) return;
   localStorage.removeItem(STORAGE_KEYS.plan);
   localStorage.removeItem(STORAGE_KEYS.entries);
+  localStorage.removeItem(STORAGE_KEYS.checkins);
   state.plan = null;
   state.entries = [];
+  state.checkins = [];
   syncPlanForms(null);
   renderAll();
+}
+
+function loadCheckinIntoForm(dateISO) {
+  if (!dom.intakeDate) return;
+  const checkin = state.checkins.find((item) => item.dateISO === dateISO);
+  if (!checkin) {
+    dom.intakeMorningWeight.value = "";
+    dom.intakeCurrentWeight.value = "";
+    return;
+  }
+  dom.intakeMorningWeight.value = formatInputNumber(checkin.morningWeightKg, 1);
+  dom.intakeCurrentWeight.value =
+    checkin.currentWeightKg !== null ? formatInputNumber(checkin.currentWeightKg, 1) : "";
+}
+
+function renderCheckinSummary() {
+  if (!dom.intakeHeadline || !dom.intakeDetail || !dom.intakePill) return;
+  const plan = state.plan;
+
+  if (!plan) {
+    dom.intakeHeadline.textContent = "Set a plan first";
+    dom.intakeDetail.textContent = "Your plan defines the daily target.";
+    dom.intakePill.textContent = "Plan";
+    updatePillTone(dom.intakePill, "neutral");
+    return;
+  }
+
+  const morningWeightKg = Number(dom.intakeMorningWeight?.value);
+  const currentWeightKg = Number(dom.intakeCurrentWeight?.value);
+  const hasMorning = Number.isFinite(morningWeightKg) && morningWeightKg > 0;
+  const hasCurrent = Number.isFinite(currentWeightKg) && currentWeightKg > 0;
+
+  if (!hasMorning) {
+    dom.intakeHeadline.textContent = "Log your morning weight";
+    dom.intakeDetail.textContent = "Add the first weigh-in to start the calculation.";
+    dom.intakePill.textContent = "Morning";
+    updatePillTone(dom.intakePill, "neutral");
+    return;
+  }
+
+  if (!hasCurrent) {
+    dom.intakeHeadline.textContent = "Log your current weight";
+    dom.intakeDetail.textContent = "We will compare it with your morning weight.";
+    dom.intakePill.textContent = "Current";
+    updatePillTone(dom.intakePill, "neutral");
+    return;
+  }
+
+  const expectedDailyChangeKg = getExpectedDailyChangeKg(plan);
+  if (!Number.isFinite(expectedDailyChangeKg)) {
+    dom.intakeHeadline.textContent = "Plan data missing";
+    dom.intakeDetail.textContent = "Update your plan to calculate the daily target.";
+    dom.intakePill.textContent = "Plan";
+    updatePillTone(dom.intakePill, "neutral");
+    return;
+  }
+
+  const targetGrams = Math.round(Math.abs(expectedDailyChangeKg * 1000));
+  const actualDeltaGrams = Math.round((currentWeightKg - morningWeightKg) * 1000);
+  const remainingGrams = targetGrams - actualDeltaGrams;
+  const absRemaining = Math.abs(remainingGrams);
+  const remainingText = `${absRemaining}g`;
+
+  if (remainingGrams === 0) {
+    dom.intakeHeadline.textContent = "You are on target today";
+    updatePillTone(dom.intakePill, "positive");
+  } else if (remainingGrams > 0) {
+    dom.intakeHeadline.textContent = `You can eat ${remainingText} more`;
+    updatePillTone(dom.intakePill, "positive");
+  } else {
+    dom.intakeHeadline.textContent = `You should eat ${remainingText} less`;
+    updatePillTone(dom.intakePill, "negative");
+  }
+
+  dom.intakePill.textContent = "Today";
+  dom.intakeDetail.textContent = `Change since morning: ${formatGramsSigned(
+    actualDeltaGrams
+  )} (target loss ${targetGrams}g).`;
 }
 
 function setActiveTab(tab) {
@@ -637,6 +794,34 @@ function upsertEntry(entries, entry) {
   return normalizeEntries(updated);
 }
 
+function normalizeCheckins(checkins) {
+  return checkins
+    .filter(
+      (item) =>
+        item &&
+        item.dateISO &&
+        Number.isFinite(item.morningWeightKg) &&
+        item.morningWeightKg > 0
+    )
+    .map((item) => ({
+      dateISO: item.dateISO,
+      morningWeightKg: Number(item.morningWeightKg),
+      currentWeightKg: Number.isFinite(item.currentWeightKg) ? Number(item.currentWeightKg) : null,
+    }))
+    .sort((a, b) => a.dateISO.localeCompare(b.dateISO));
+}
+
+function upsertCheckin(checkins, checkin) {
+  const updated = [...checkins];
+  const index = updated.findIndex((item) => item.dateISO === checkin.dateISO);
+  if (index >= 0) {
+    updated[index] = checkin;
+  } else {
+    updated.push(checkin);
+  }
+  return normalizeCheckins(updated);
+}
+
 function buildPlanFromForm(form) {
   const planMode = form.elements.planMode?.value === "daily" ? "daily" : "duration";
   const startWeightKg = Number(form.elements.startWeightKg.value);
@@ -774,6 +959,21 @@ function loadEntries() {
 
 function saveEntries(entries) {
   localStorage.setItem(STORAGE_KEYS.entries, JSON.stringify(entries));
+}
+
+function loadCheckins() {
+  const raw = localStorage.getItem(STORAGE_KEYS.checkins);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveCheckins(checkins) {
+  localStorage.setItem(STORAGE_KEYS.checkins, JSON.stringify(checkins));
 }
 
 function registerServiceWorker() {
