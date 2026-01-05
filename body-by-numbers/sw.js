@@ -1,4 +1,4 @@
-const CACHE_NAME = "body-by-numbers-v6";
+const CACHE_NAME = "body-by-numbers-v7";
 const ASSETS = [
   "./",
   "./index.html",
